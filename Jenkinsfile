@@ -1,38 +1,27 @@
 pipeline {
     agent any
-    environment {
-        DOCKER_IMAGE = "nodejs-app"
-    }
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git 'https://github.com/RomilMovaliya/nodejs-jenkins-demo.git'
             }
         }
         stage('Build') {
             steps {
-                script {
-                    dockerImage = docker.build("${env.DOCKER_IMAGE}:${env.BUILD_ID}")
-                }
+                sh 'npm install'
+                sh 'npm run build'
             }
         }
         stage('Test') {
             steps {
-                script {
-                    dockerImage.inside {
-                        sh 'npm test'
-                    }
-                }
+                sh 'npm test'
             }
         }
-        stage('Deploy to Kubernetes') {
+        stage('Deploy') {
             steps {
-                script {
-                    withKubeConfig([credentialsId: 'kubeconfig']) {
-                        sh 'kubectl apply -f kubernetes-deployment.yml'
-                    }
-                }
+                sh 'kubectl apply -f deployment.yaml'
             }
         }
     }
 }
+
